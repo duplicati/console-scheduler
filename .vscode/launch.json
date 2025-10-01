@@ -1,0 +1,22 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Scheduler",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "dotnet: build",
+      "program": "${workspaceFolder}/src/Scheduler/bin/Debug/net9.0/Scheduler.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Scheduler",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_URLS": "http://localhost:5007",
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ]
+}
