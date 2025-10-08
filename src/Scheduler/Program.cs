@@ -17,7 +17,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-using CommonLoggingConfig;
+using ConsoleCommon;
 using MassTransit;
 using MassTransit.SqlTransport.PostgreSql;
 using Quartz;
@@ -25,7 +25,6 @@ using Scheduler.MassTransit;
 using Scheduler.Messages;
 using Scheduler.Quartz;
 using Scheduler.Schedules;
-using SimpleSecurityFilter;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
