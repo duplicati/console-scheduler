@@ -27,20 +27,7 @@ using Scheduler.Quartz;
 using Scheduler.Schedules;
 
 var builder = WebApplication.CreateSlimBuilder(args);
-
-// Support the untracked local environment variables file for development
-if (builder.Environment.IsDevelopment())
-{
-    // Load into environment variables
-    var localEnvironmentVariables = new ConfigurationBuilder()
-           .AddJsonFile("local.environmentvariables.json", optional: true, reloadOnChange: false)
-           .Build().AsEnumerable().ToList();
-
-    foreach (var (key, value) in localEnvironmentVariables)
-        Environment.SetEnvironmentVariable(key, value);
-}
-
-builder.Configuration.AddEnvironmentVariables();
+builder.ConfigureForDevelopment();
 
 var serilogConfig = builder.Configuration.GetSection("Serilog").Get<SerilogConfig>();
 builder.AddCommonLogging(serilogConfig, null);
