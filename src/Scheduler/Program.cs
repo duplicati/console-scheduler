@@ -40,6 +40,7 @@ var adminDatabaseConnectionString = builder.Configuration.GetValue<string>("Data
 var messagingConnectionString = builder.Configuration.GetValue<string>("Messaging:ConnectionString");
 var adminMessagingConnectionString = builder.Configuration.GetValue<string>("Messaging:AdminConnectionString");
 var redirectUrl = builder.Configuration.GetValue<string>("Environment:RedirectUrl");
+var emitApiKey = builder.Configuration.GetValue<string>("Environment:EmitApiKey");
 
 // For dev setups, we assume the connection string has admin rights if no admin connection string is explicitly set
 if (builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(adminDatabaseConnectionString))
@@ -118,6 +119,36 @@ app.MapGet("/", ctx =>
         ctx.Response.Redirect(redirectUrl);
     return Task.CompletedTask;
 });
+
+// Support manual message emission for testing purposes
+if (!string.IsNullOrWhiteSpace(emitApiKey))
+{
+    app.MapGet("/emit", ctx =>
+    {
+        var apiKey = ctx.Request.Query["apiKey"].ToString();
+        if (apiKey != emitApiKey)
+        {
+            ctx.Response.StatusCode = 403;
+            return Task.CompletedTask;
+        }
+
+        var type = ctx.Request.Query["type"].ToString().ToLowerInvariant().Trim();
+        if (string.Equals(type, "tenminutes", StringComparison.OrdinalIgnoreCase))
+            ctx.RequestServices.GetRequiredService<IBus>().Publish(new EveryTenMinutesMessage());
+        else if (string.Equals(type, "hourly", StringComparison.OrdinalIgnoreCase))
+            ctx.RequestServices.GetRequiredService<IBus>().Publish(new HourlyMessage());
+        else if (string.Equals(type, "daily", StringComparison.OrdinalIgnoreCase))
+            ctx.RequestServices.GetRequiredService<IBus>().Publish(new DailyMessage());
+        else
+        {
+            ctx.Response.StatusCode = 400;
+            return Task.CompletedTask;
+        }
+
+        ctx.Response.StatusCode = 200;
+        return Task.CompletedTask;
+    });
+}
 
 await using var scope = app.Services.CreateAsyncScope();
 var scheduler = scope.ServiceProvider.GetRequiredService<IRecurringMessageScheduler>();
