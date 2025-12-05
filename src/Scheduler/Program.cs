@@ -134,11 +134,11 @@ if (!string.IsNullOrWhiteSpace(emitApiKey))
 
         var type = ctx.Request.Query["type"].ToString().ToLowerInvariant().Trim();
         if (string.Equals(type, "tenminutes", StringComparison.OrdinalIgnoreCase))
-            ctx.RequestServices.GetRequiredService<IBus>().Publish(new EveryTenMinutesMessage());
+            ctx.RequestServices.GetRequiredService<IBus>().Publish(new EveryTenMinutesMessage(), ctx => { ctx.TimeToLive = TimeSpan.FromMinutes(5); });
         else if (string.Equals(type, "hourly", StringComparison.OrdinalIgnoreCase))
-            ctx.RequestServices.GetRequiredService<IBus>().Publish(new HourlyMessage());
+            ctx.RequestServices.GetRequiredService<IBus>().Publish(new HourlyMessage(), ctx => { ctx.TimeToLive = TimeSpan.FromMinutes(30); });
         else if (string.Equals(type, "daily", StringComparison.OrdinalIgnoreCase))
-            ctx.RequestServices.GetRequiredService<IBus>().Publish(new DailyMessage());
+            ctx.RequestServices.GetRequiredService<IBus>().Publish(new DailyMessage(), ctx => { ctx.TimeToLive = TimeSpan.FromMinutes(60); });
         else
         {
             ctx.Response.StatusCode = 400;
@@ -153,9 +153,18 @@ if (!string.IsNullOrWhiteSpace(emitApiKey))
 await using var scope = app.Services.CreateAsyncScope();
 var scheduler = scope.ServiceProvider.GetRequiredService<IRecurringMessageScheduler>();
 await Task.WhenAll(
-    scheduler.ScheduleRecurringPublish(new EveryTenMinutesSchedule(), new EveryTenMinutesMessage()),
-    scheduler.ScheduleRecurringPublish(new HourlySchedule(), new HourlyMessage()),
-    scheduler.ScheduleRecurringPublish(new DailySchedule(), new DailyMessage())
+    scheduler.ScheduleRecurringPublish(
+        new EveryTenMinutesSchedule(),
+        new EveryTenMinutesMessage(),
+        Pipe.Execute<SendContext<EveryTenMinutesMessage>>(ctx => { ctx.TimeToLive = TimeSpan.FromMinutes(5); })),
+    scheduler.ScheduleRecurringPublish(
+        new HourlySchedule(),
+        new HourlyMessage(),
+        Pipe.Execute<SendContext<HourlyMessage>>(ctx => { ctx.TimeToLive = TimeSpan.FromMinutes(30); })),
+    scheduler.ScheduleRecurringPublish(
+        new DailySchedule(),
+        new DailyMessage(),
+        Pipe.Execute<SendContext<DailyMessage>>(ctx => { ctx.TimeToLive = TimeSpan.FromMinutes(60); }))
 );
 
 app.Run();
